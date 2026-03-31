@@ -1,4 +1,6 @@
-export default async function handler(req, res) {
+const https = require("https");
+
+module.exports = async function handler(req, res) {
   const { lat, lng, fuel, radius, limit, sort } = req.query;
 
   if (!lat || !lng) {
@@ -14,16 +16,26 @@ export default async function handler(req, res) {
     sort: sort || "price_low",
   });
 
-  try {
-    const response = await fetch(
-      `https://checkfuelprices.co.uk/api/widget/stations?${params.toString()}`
-    );
-    const data = await response.json();
+  const url = `https://checkfuelprices.co.uk/api/widget/stations?${params.toString()}`;
 
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
-    return res.status(200).json(data);
-  } catch (err) {
-    return res.status(500).json({ error: "Failed to fetch fuel prices" });
-  }
-}
+  return new Promise((resolve) => {
+    https.get(url, { headers: { "User-Agent": "UKFuelTracker/1.0" } }, (response) => {
+      let data = "";
+      response.on("data", (chunk) => { data += chunk; });
+      response.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
+          res.status(200).json(parsed);
+        } catch (e) {
+          res.status(500).json({ error: "Invalid response from fuel API", raw: data.slice(0, 200) });
+        }
+        resolve();
+      });
+    }).on("error", (err) => {
+      res.status(500).json({ error: "Failed to connect to fuel API", detail: err.message });
+      resolve();
+    });
+  });
+};
