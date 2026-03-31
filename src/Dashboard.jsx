@@ -145,6 +145,28 @@ function FuelSearch() {
   const [areaName, setAreaName] = useState("");
   const [lastCoords, setLastCoords] = useState(null);
 
+  const fetchStations = async (lat, lng, fuel, rad, retries = 2) => {
+    const url = `https://checkfuelprices.co.uk/api/widget/stations?lat=${lat}&lng=${lng}&fuel=${fuel}&radius=${rad}&limit=10&sort=price_low`;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(url);
+        const raw = await res.json();
+        const data = Array.isArray(raw) ? raw
+          : Array.isArray(raw?.stations) ? raw.stations
+          : Array.isArray(raw?.data) ? raw.data
+          : Array.isArray(raw?.results) ? raw.results
+          : null;
+        if (data && data.length > 0) return data;
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 500)); continue; }
+        return null;
+      } catch (err) {
+        if (attempt < retries) { await new Promise(r => setTimeout(r, 500)); continue; }
+        throw err;
+      }
+    }
+    return null;
+  };
+
   const search = async (overrideFuel, overrideRadius) => {
     const fuel = overrideFuel || fuelType;
     const rad = overrideRadius || radius;
@@ -169,17 +191,9 @@ function FuelSearch() {
         setLastCoords({ postcode: clean, lat, lng });
       }
 
-      const url = `https://checkfuelprices.co.uk/api/widget/stations?lat=${lat}&lng=${lng}&fuel=${fuel}&radius=${rad}&limit=10&sort=price_low`;
-      const stationsRes = await fetch(url);
-      const raw = await stationsRes.json();
+      const stationsData = await fetchStations(lat, lng, fuel, rad);
 
-      const stationsData = Array.isArray(raw) ? raw
-        : Array.isArray(raw?.stations) ? raw.stations
-        : Array.isArray(raw?.data) ? raw.data
-        : Array.isArray(raw?.results) ? raw.results
-        : null;
-
-      if (stationsData && stationsData.length > 0) {
+      if (stationsData) {
         setStations(stationsData);
       } else {
         setError(`No stations found within ${rad} miles. Try a larger radius, or search at checkfuelprices.co.uk directly.`);
