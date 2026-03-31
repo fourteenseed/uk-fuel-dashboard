@@ -146,7 +146,7 @@ function FuelSearch() {
   const [lastCoords, setLastCoords] = useState(null);
 
   const fetchStations = async (lat, lng, fuel, rad, retries = 2) => {
-    const url = `https://checkfuelprices.co.uk/api/widget/stations?lat=${lat}&lng=${lng}&fuel=${fuel}&radius=${rad}&limit=10&sort=price_low`;
+    const url = `/api/stations?lat=${lat}&lng=${lng}&fuel=${fuel}&radius=${rad}&limit=10&sort=price_low`;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const res = await fetch(url);
