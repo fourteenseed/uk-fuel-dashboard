@@ -136,188 +136,55 @@ const Panel = ({ children, style }) => (
 
 function FuelSearch() {
   const [postcode, setPostcode] = useState("");
-  const [fuelType, setFuelType] = useState("E10");
-  const [radius, setRadius] = useState(5);
-  const [stations, setStations] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
-  const [areaName, setAreaName] = useState("");
-  const [lastCoords, setLastCoords] = useState(null);
+  const [iframeSrc, setIframeSrc] = useState("");
 
-  const fetchStations = async (lat, lng, fuel, rad, retries = 2) => {
-    const url = `/api/stations?lat=${lat}&lng=${lng}&fuel=${fuel}&radius=${rad}&limit=10&sort=price_low`;
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const res = await fetch(url);
-        const raw = await res.json();
-        const data = Array.isArray(raw) ? raw
-          : Array.isArray(raw?.stations) ? raw.stations
-          : Array.isArray(raw?.data) ? raw.data
-          : Array.isArray(raw?.results) ? raw.results
-          : null;
-        if (data && data.length > 0) return data;
-        if (attempt < retries) { await new Promise(r => setTimeout(r, 500)); continue; }
-        return null;
-      } catch (err) {
-        if (attempt < retries) { await new Promise(r => setTimeout(r, 500)); continue; }
-        throw err;
-      }
-    }
-    return null;
-  };
-
-  const search = async (overrideFuel, overrideRadius) => {
-    const fuel = overrideFuel || fuelType;
-    const rad = overrideRadius || radius;
+  const search = () => {
     if (!postcode.trim()) return;
-    setLoading(true); setError(null); setStations([]); setSearched(true);
-
-    try {
-      let lat, lng;
-
-      // Reuse cached coords if we already geocoded this postcode
-      if (lastCoords && lastCoords.postcode === postcode.replace(/\s+/g, "").toUpperCase()) {
-        lat = lastCoords.lat;
-        lng = lastCoords.lng;
-      } else {
-        const clean = postcode.replace(/\s+/g, "").toUpperCase();
-        const geoRes = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
-        const geoData = await geoRes.json();
-        if (geoData.status !== 200 || !geoData.result) { setError("Couldn't find that postcode. Check it and try again."); setLoading(false); return; }
-        lat = geoData.result.latitude;
-        lng = geoData.result.longitude;
-        setAreaName(geoData.result.admin_district || "");
-        setLastCoords({ postcode: clean, lat, lng });
-      }
-
-      const stationsData = await fetchStations(lat, lng, fuel, rad);
-
-      if (stationsData) {
-        setStations(stationsData);
-      } else {
-        setError(`No stations found within ${rad} miles. Try a larger radius, or search at checkfuelprices.co.uk directly.`);
-        console.log("API response:", raw);
-      }
-    } catch (err) {
-      console.error("Fuel search error:", err);
-      setError("Couldn't connect to the fuel price service. This may be a cross-origin restriction. Try checkfuelprices.co.uk directly.");
-    }
-    setLoading(false);
+    const clean = postcode.replace(/\s+/g, "");
+    setIframeSrc(`https://checkfuelprices.co.uk/widget/embed?postcode=${clean}&theme=dark&sort=price_low&radius=10&limit=10&search=false&filters=true`);
+    setSearched(true);
   };
-
-  const changeFuel = (ft) => {
-    setFuelType(ft);
-    if (searched && postcode.trim()) search(ft, radius);
-  };
-
-  const changeRadius = (r) => {
-    setRadius(r);
-    if (searched && postcode.trim()) search(fuelType, r);
-  };
-
-  const fuelLabel = { E10: "Petrol (E10)", E5: "Super (E5)", B7: "Diesel (B7)", SDV: "Super Diesel" };
-  const fuelColors = { E10: "#4A9EDE", E5: "#9B59B6", B7: "#E84C3D", SDV: "#E67E22" };
-  const fc = fuelColors[fuelType];
 
   return (
     <Panel>
-      <SectionTitle sub="Live from GOV.UK Fuel Finder via CheckFuelPrices API + postcodes.io">Find Cheapest Fuel Near You</SectionTitle>
+      <SectionTitle sub="Live from GOV.UK Fuel Finder via CheckFuelPrices">Find Cheapest Fuel Near You</SectionTitle>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-        <div style={{ flex: "1 1 150px" }}>
+        <div style={{ flex: "1 1 200px" }}>
           <input type="text" value={postcode} onChange={e => setPostcode(e.target.value.toUpperCase())}
             onKeyDown={e => e.key === "Enter" && search()} placeholder="e.g. TR13 8NN"
             style={{ width: "100%", boxSizing: "border-box", background: "#0C0C0C", border: "1px solid #383838", borderRadius: 8, padding: "10px 14px", color: "#F0E8D8", fontSize: 15, fontFamily: "var(--mono)", letterSpacing: "0.05em", outline: "none" }} />
         </div>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          {["E10", "B7", "E5", "SDV"].map(ft => (
-            <button key={ft} onClick={() => changeFuel(ft)} style={{
-              background: fuelType === ft ? fuelColors[ft] + "22" : "#0C0C0C",
-              border: `1px solid ${fuelType === ft ? fuelColors[ft] : "#383838"}`,
-              borderRadius: 6, padding: "8px 10px", color: fuelType === ft ? fuelColors[ft] : "#908878",
-              fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "var(--mono)", transition: "all 0.15s",
-            }}>{ft}</button>
-          ))}
-        </div>
-        <select value={radius} onChange={e => changeRadius(Number(e.target.value))} style={{
-          background: "#0C0C0C", border: "1px solid #383838", borderRadius: 8, padding: "8px 10px",
-          color: "#F0E8D8", fontSize: 13, fontFamily: "var(--mono)", cursor: "pointer",
-        }}>
-          {[1, 3, 5, 10, 15, 25].map(r => <option key={r} value={r}>{r} mi</option>)}
-        </select>
-        <button onClick={search} disabled={loading} style={{
-          background: loading ? "#383838" : "linear-gradient(135deg, #D4A843 0%, #B48830 100%)",
+        <button onClick={search} style={{
+          background: "linear-gradient(135deg, #D4A843 0%, #B48830 100%)",
           border: "none", borderRadius: 8, padding: "10px 22px",
-          color: loading ? "#908878" : "#0A0A0A", fontSize: 14, fontWeight: 700,
-          cursor: loading ? "wait" : "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
-        }}>{loading ? "Searching..." : "Search"}</button>
+          color: "#0A0A0A", fontSize: 14, fontWeight: 700,
+          cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap",
+        }}>Search</button>
       </div>
 
-      {error && (
-        <div style={{ background: "#1F1210", border: "1px solid #6C3030", borderRadius: 8, padding: "12px 14px", fontSize: 13, color: "#E08080", marginBottom: 12, lineHeight: 1.5 }}>
-          {error}
-          {searched && (
-            <div style={{ marginTop: 8 }}>
-              <a href={`https://checkfuelprices.co.uk/search?q=${postcode.replace(/\s+/g, "+")}`}
-                target="_blank" rel="noopener noreferrer"
-                style={{ color: "#D4A843", fontSize: 12 }}>
-                Search directly on CheckFuelPrices →
-              </a>
-            </div>
-          )}
+      {searched && iframeSrc && (
+        <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #1E1E1E" }}>
+          <iframe
+            src={iframeSrc}
+            width="100%"
+            height="600"
+            frameBorder="0"
+            style={{ display: "block", background: "#0A0A0A" }}
+            title="Fuel prices near you"
+          />
         </div>
       )}
 
-      {stations.length > 0 && (
-        <>
-          <div style={{ fontSize: 13, color: "#9A9080", marginBottom: 10 }}>
-            Cheapest <span style={{ color: fc }}>{fuelLabel[fuelType]}</span> within {radius} mi of{" "}
-            <span style={{ color: "#D4A843" }}>{postcode}</span>{areaName && ` (${areaName})`}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {stations.map((s, i) => {
-              const price = s.prices?.[fuelType] ?? s.price ?? null;
-              const name = s.brand ? `${s.brand}${s.name ? " " + s.name : ""}` : s.name || "Station";
-              const dist = s.distance != null ? `${Number(s.distance).toFixed(1)} mi` : "";
-              const isFirst = i === 0;
-              return (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-                  background: isFirst ? `${fc}0A` : "#0E0E0E",
-                  border: `1px solid ${isFirst ? fc + "40" : "#1E1E1E"}`, borderRadius: 8,
-                }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: "50%", background: isFirst ? fc : "#1E1E1E",
-                    color: isFirst ? "#0A0A0A" : "#908878", display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 12, fontWeight: 700, fontFamily: "var(--mono)", flexShrink: 0,
-                  }}>{i + 1}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "#F0E8D8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
-                    <div style={{ fontSize: 12, color: "#8A7E6E", marginTop: 2 }}>
-                      {s.address || s.postcode || ""}{dist && <span style={{ marginLeft: 8, color: "#9A9080" }}>{dist}</span>}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <span style={{ fontSize: 20, fontWeight: 700, color: isFirst ? fc : "#F0E8D8", fontFamily: "var(--mono)" }}>
-                      {price ? Number(price).toFixed(1) : "—"}
-                    </span>
-                    <span style={{ fontSize: 12, color: "#908878", marginLeft: 2 }}>p</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div style={{ fontSize: 11, color: "#6A6050", marginTop: 10 }}>
-            Prices from <a href="https://checkfuelprices.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: "#8A7E6E" }}>checkfuelprices.co.uk</a> via GOV.UK Fuel Finder open data
-          </div>
-        </>
-      )}
-
-      {!searched && stations.length === 0 && !error && (
+      {!searched && (
         <div style={{ textAlign: "center", padding: "20px 16px", color: "#706858", fontSize: 13 }}>
           Enter a UK postcode to find the cheapest fuel near you.<br />Live prices from 4,000+ stations, updated every 30 minutes.
         </div>
       )}
+
+      <div style={{ fontSize: 11, color: "#6A6050", marginTop: 10 }}>
+        Prices from <a href="https://checkfuelprices.co.uk" target="_blank" rel="noopener noreferrer" style={{ color: "#8A7E6E" }}>checkfuelprices.co.uk</a> via GOV.UK Fuel Finder open data
+      </div>
     </Panel>
   );
 }
