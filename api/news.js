@@ -15,6 +15,8 @@ const readTag = (block, tag) => {
   return decodeXml(match?.[1] || "");
 };
 
+const cleanHeadline = (value) => value.replace(new RegExp(`\\s*${String.fromCharCode(8212)}\\s*`, "g"), ": ");
+
 const toIsoDate = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : date.toISOString();
@@ -26,7 +28,9 @@ const parseItems = (xml) =>
       const block = match[1];
       const source = readTag(block, "source") || "UK fuel news";
       const rawTitle = readTag(block, "title");
-      const title = rawTitle.endsWith(` - ${source}`) ? rawTitle.slice(0, -(` - ${source}`.length)) : rawTitle;
+      const title = cleanHeadline(
+        rawTitle.endsWith(` - ${source}`) ? rawTitle.slice(0, -(` - ${source}`.length)) : rawTitle,
+      );
       return {
         title,
         source,

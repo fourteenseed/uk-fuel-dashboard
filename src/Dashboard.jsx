@@ -92,8 +92,11 @@ function PriceChange({ current, previous }) {
 
   return (
     <span className={`price-change price-change--${direction}`}>
-      {direction === "up" ? "↑" : direction === "down" ? "↓" : "–"} {Math.abs(change).toFixed(2)}p
-      <span> on last week</span>
+      {direction === "flat" ? (
+        <>No change <span>on last week</span></>
+      ) : (
+        <>{direction === "up" ? "↑" : "↓"} {Math.abs(change).toFixed(2)}p <span>on last week</span></>
+      )}
     </span>
   );
 }
@@ -144,7 +147,7 @@ function FuelSearch() {
           setLocationState("idle");
         } catch {
           setLocationState("idle");
-          setError("We couldn’t match your location to a postcode. Try entering one instead.");
+          setError("That location didn’t return a nearby postcode. Try entering one instead.");
         }
       },
       (locationError) => {
@@ -152,7 +155,7 @@ function FuelSearch() {
         if (locationError.code === locationError.PERMISSION_DENIED) {
           setError("Location permission was declined. You can still search by postcode.");
         } else {
-          setError("We couldn’t get your location. Try entering a postcode instead.");
+          setError("Your browser couldn’t share a location. Try entering a postcode instead.");
         }
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
@@ -175,7 +178,7 @@ function FuelSearch() {
       <div className="search-card__intro">
         <p className="eyebrow">Live local prices</p>
         <h2 id="search-title">What are prices like near you?</h2>
-        <p>Search a postcode or let your browser find the nearest one. Results are sorted cheapest first.</p>
+        <p>Search a postcode, or let your browser find the nearest one. The cheapest prices come first.</p>
       </div>
 
       <form
@@ -308,7 +311,7 @@ function NationalPrices({ data }) {
           </div>
         </div>
       </div>
-      <p className="fine-print">National averages are a useful benchmark. The postcode search above shows reported prices at individual forecourts.</p>
+      <p className="fine-print">The national average is a useful benchmark. The postcode search shows what individual forecourts have reported.</p>
     </section>
   );
 }
@@ -408,11 +411,11 @@ export default function UKFuelTracker() {
           <div className="hero__copy">
             <div className="live-label"><span /> Local prices updated throughout the day</div>
             <h1>Find cheaper fuel <em>before you set off.</em></h1>
-            <p>Compare petrol and diesel prices around any UK postcode—with one quick search.</p>
+            <p>Compare petrol and diesel prices around any UK postcode. Or use your current location.</p>
           </div>
           <div className="hero__aside" aria-label="About this tracker">
-            <span>A useful little public service</span>
-            <p>Built to make the UK’s open fuel-price data easier to use.</p>
+            <span>Why this exists</span>
+            <p>I built this over an evening when fuel prices suddenly started climbing. The useful bit is still the same: find the cheapest nearby.</p>
           </div>
         </section>
 
@@ -428,7 +431,7 @@ export default function UKFuelTracker() {
           <p>Local prices via CheckFuelPrices and the GOV.UK Fuel Finder data service. National averages from DESNZ.</p>
         </div>
         <div className="site-footer__right">
-          <a href="https://fourteenseed.com" target="_blank" rel="noreferrer">A Fourteen Seed weekend build ↗</a>
+          <a href="https://fourteenseed.com" target="_blank" rel="noreferrer">A Fourteen Seed side project ↗</a>
           <span>Prices can change at any time. Check the pump before filling.</span>
         </div>
       </footer>

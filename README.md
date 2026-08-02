@@ -4,10 +4,10 @@ A focused UK fuel-price finder with postcode search, current-location lookup, li
 
 ## Live APIs used (all free, no keys)
 
-- **postcodes.io** — converts browser location to the nearest UK postcode
-- **CheckFuelPrices** — local forecourt prices from the GOV.UK Fuel Finder scheme
-- **DESNZ / GOV.UK** — official weekly national petrol and diesel averages
-- **Google News RSS** — rolling UK fuel-price headlines, with reviewed fallbacks
+- **postcodes.io** converts browser location to the nearest UK postcode
+- **CheckFuelPrices** provides local forecourt prices from the GOV.UK Fuel Finder scheme
+- **DESNZ / GOV.UK** provides official weekly national petrol and diesel averages
+- **Google News RSS** supplies rolling UK fuel-price headlines, with reviewed fallbacks
 
 ## Local development
 
@@ -32,7 +32,7 @@ vercel             # follow the prompts
 1. Push this repo to GitHub
 2. Go to [vercel.com/new](https://vercel.com/new)
 3. Import the repo
-4. Vercel auto-detects Vite — just click Deploy
+4. Vercel auto-detects Vite. Just click Deploy.
 5. Done. You get a `.vercel.app` URL immediately
 
 ### Custom domain
