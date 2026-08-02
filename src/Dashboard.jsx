@@ -415,7 +415,7 @@ export default function UKFuelTracker() {
           </div>
           <div className="hero__aside" aria-label="About this tracker">
             <span>Why this exists</span>
-            <p>I built this over an evening when fuel prices suddenly started climbing. The useful bit is still the same: find the cheapest nearby.</p>
+            <p>I built this in a few hours one Thursday night because I was fed up with how differently pump prices were changing from one forecourt to the next. The useful bit is still the same: find the cheapest nearby.</p>
           </div>
         </section>
 
