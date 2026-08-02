@@ -1,11 +1,13 @@
-# UK Oil & Fuel Supply Intelligence Dashboard
+# UK Fuel Tracker
 
-Live dashboard tracking UK oil reserves, production, Brent crude prices, pump prices, and local fuel search by postcode.
+A focused UK fuel-price finder with postcode search, current-location lookup, live local results, automatically refreshed national averages, and a rolling UK fuel-news feed.
 
 ## Live APIs used (all free, no keys)
 
-- **postcodes.io** — UK postcode geocoding
-- **CheckFuelPrices API** — live fuel prices from GOV.UK Fuel Finder scheme (4,000+ stations)
+- **postcodes.io** — converts browser location to the nearest UK postcode
+- **CheckFuelPrices** — local forecourt prices from the GOV.UK Fuel Finder scheme
+- **DESNZ / GOV.UK** — official weekly national petrol and diesel averages
+- **Google News RSS** — rolling UK fuel-price headlines, with reviewed fallbacks
 
 ## Local development
 
@@ -42,11 +44,9 @@ Point a CNAME record to `cname.vercel-dns.com` in your DNS.
 
 | Data | Source | Update frequency |
 |------|--------|-----------------|
-| Local fuel prices | GOV.UK Fuel Finder via CheckFuelPrices | Every 30 min |
-| Brent crude | Static (update manually or wire to API) | As needed |
-| Strategic reserves | DESNZ, Feb 2026 | Monthly |
-| Production/consumption | DUKES 2025 / Energy Trends | Annual/quarterly |
-| Stock levels | DESNZ ET 3.11 | Monthly |
+| Local fuel prices | GOV.UK Fuel Finder via CheckFuelPrices | Throughout the day |
+| National averages | DESNZ weekly road fuel prices | Weekly |
+| UK fuel headlines | Google News RSS | Hourly cache |
 
 ## Attribution
 
